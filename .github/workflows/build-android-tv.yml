@@ -1,0 +1,49 @@
+name: Build OrionTV Android TV (ARMv7a)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-android-tv:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout 仓库
+      - uses: actions/checkout@v3
+
+      # 2. 安装 Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # 可根据项目要求修改
+
+      # 3. 安装 Yarn
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      # 4. 安装 Expo CLI
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
+
+      # 5. 安装项目依赖
+      - name: Install dependencies
+        run: yarn
+
+      # 6. 为 TV 生成原生项目文件
+      - name: Prebuild for TV
+        run: yarn prebuild-tv
+
+      # 7. 构建 Android TV APK (ARMv7a)
+      - name: Build Android APK (ARMv7a)
+        run: |
+          cd android
+          ./gradlew assembleRelease -PabiFilters=armeabi-v7a
+
+      # 8. 上传 APK
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: OrionTV-AndroidTV-ARMv7
+          path: android/app/build/outputs/apk/release/app-release.apk
