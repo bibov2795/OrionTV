@@ -32,7 +32,7 @@ jobs:
           cargo build --release --target=armv7-unknown-linux-gnueabihf
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: oriontv-armv7
           path: target/armv7-unknown-linux-gnueabihf/release/oriontv
