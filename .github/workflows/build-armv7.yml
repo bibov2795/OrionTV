@@ -3,20 +3,23 @@ name: Build OrionTV ARMv7
 on:
   workflow_dispatch:   # 手动触发
   push:
-    branches: [ main ] # 也可以改成你实际开发的分支
+    branches: [ main ] # 你可以改成你自己的分支
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # 拉取代码
       - uses: actions/checkout@v3
 
+      # 安装 armv7 交叉编译工具
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-linux-gnueabihf pkg-config
 
+      # 安装 Rust，并启用 armv7 目标
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -24,15 +27,18 @@ jobs:
           override: true
           target: armv7-unknown-linux-gnueabihf
 
+      # 编译 armv7a 版本
       - name: Build for ARMv7
         run: |
           mkdir -p .cargo
-          echo '[target.armv7-unknown-linux-gnueabihf]' >> .cargo/config.toml
+          echo '[target.armv7-unknown-linux-gnueabihf]' > .cargo/config.toml
           echo 'linker = "arm-linux-gnueabihf-gcc"' >> .cargo/config.toml
+          cd orion-tv
           cargo build --release --target=armv7-unknown-linux-gnueabihf
 
+      # 上传编译好的二进制文件
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: oriontv-armv7
-          path: target/armv7-unknown-linux-gnueabihf/release/oriontv
+          path: orion-tv/target/armv7-unknown-linux-gnueabihf/release/oriontv
