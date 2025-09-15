@@ -33,7 +33,6 @@ jobs:
           mkdir -p .cargo
           echo '[target.armv7-unknown-linux-gnueabihf]' > .cargo/config.toml
           echo 'linker = "arm-linux-gnueabihf-gcc"' >> .cargo/config.toml
-          cd orion-tv
           cargo build --release --target=armv7-unknown-linux-gnueabihf
 
       # 上传编译好的二进制文件
@@ -41,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: oriontv-armv7
-          path: orion-tv/target/armv7-unknown-linux-gnueabihf/release/oriontv
+          path: target/armv7-unknown-linux-gnueabihf/release/oriontv
