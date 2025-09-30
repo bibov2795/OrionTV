@@ -11,43 +11,33 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # 安装 JDK 17 (Android Gradle Plugin 推荐)
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      # 安装 Rust
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          distribution: temurin
-          java-version: 17
+          targets: armv7-linux-androideabi
 
-      # 安装 Node.js (React Native/前端部分依赖)
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # 安装 Android SDK + NDK
+      - name: Install Android SDK and NDK
+        uses: android-actions/setup-android@v3
         with:
-          node-version: 18
+          api-level: 33
+          ndk: 25.2.9519653
 
-      # 安装 Yarn
-      - name: Install Yarn
-        run: npm install -g yarn
+      # 安装 cargo-apk (打包APK) 和 cargo-ndk
+      - name: Install cargo-apk and cargo-ndk
+        run: |
+          cargo install cargo-ndk
+          cargo install cargo-apk
 
-      # 安装前端依赖
-      - name: Install JS dependencies
-        run: yarn install --frozen-lockfile
+      # 编译 ARMv7a APK
+      - name: Build APK
+        run: |
+          cargo apk build --release --target=armv7-linux-androideabi
 
-      # 安装 Gradle Wrapper 权限
-      - name: Grant execute permission for gradlew
-        run: chmod +x android/gradlew
-
-      # 构建 armeabi-v7a 的 release APK
-      - name: Build Release APK
-        working-directory: android
-        run: ./gradlew assembleRelease -ParmFilters=armeabi-v7a
-
-      # 输出 APK 文件路径
-      - name: List APK outputs
-        run: ls -R android/app/build/outputs/
-
-      # 上传构建产物
+      # 上传 APK 产物
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: OrionTV-armv7a-release
-          path: android/app/build/outputs/apk/release/*.apk
+          name: OrionTV-armv7a
+          path: target/debug/apk/*.apk
