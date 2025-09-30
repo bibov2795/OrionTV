@@ -1,53 +1,53 @@
-name: Build OrionTV ARMv7
+name: Build Android TV APK (armeabi-v7a)
 
 on:
-  workflow_dispatch:   # 手动触发
-  push:
-    branches: [ main ] # 可以改成自己的分支
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 拉取代码
-      - uses: actions/checkout@v3
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-      # 调试：列出仓库结构，确认 Cargo.toml 位置
-      - name: Debug list files
-        run: |
-          pwd
-          ls -R
-
-      # 安装 armv7 交叉编译工具
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf pkg-config
-
-      # 安装 Rust 并添加 armv7 目标
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      # 安装 JDK 17 (Android Gradle Plugin 推荐)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
-          toolchain: stable
-          override: true
-          target: armv7-unknown-linux-gnueabihf
+          distribution: temurin
+          java-version: 17
 
-      # 编译 armv7a 版本
-      - name: Build for ARMv7
-        run: |
-          # 查找 Cargo.toml
-          CARGO_DIR=$(find . -name Cargo.toml -exec dirname {} \;)
-          echo "Found Cargo.toml in $CARGO_DIR"
-          mkdir -p $CARGO_DIR/.cargo
-          echo '[target.armv7-unknown-linux-gnueabihf]' > $CARGO_DIR/.cargo/config.toml
-          echo 'linker = "arm-linux-gnueabihf-gcc"' >> $CARGO_DIR/.cargo/config.toml
-          cd $CARGO_DIR
-          cargo build --release --target=armv7-unknown-linux-gnueabihf
+      # 安装 Node.js (React Native/前端部分依赖)
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
 
-      # 上传编译好的二进制文件
-      - name: Upload artifact
+      # 安装 Yarn
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      # 安装前端依赖
+      - name: Install JS dependencies
+        run: yarn install --frozen-lockfile
+
+      # 安装 Gradle Wrapper 权限
+      - name: Grant execute permission for gradlew
+        run: chmod +x android/gradlew
+
+      # 构建 armeabi-v7a 的 release APK
+      - name: Build Release APK
+        working-directory: android
+        run: ./gradlew assembleRelease -ParmFilters=armeabi-v7a
+
+      # 输出 APK 文件路径
+      - name: List APK outputs
+        run: ls -R android/app/build/outputs/
+
+      # 上传构建产物
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: oriontv-armv7
-          path: $CARGO_DIR/target/armv7-unknown-linux-gnueabihf/release/oriontv
+          name: OrionTV-armv7a-release
+          path: android/app/build/outputs/apk/release/*.apk
